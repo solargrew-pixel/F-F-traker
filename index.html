@@ -1,213 +1,126 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Grew Energy Pvt. Ltd.</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{
-    margin:0;
-    font-family:Arial, Helvetica, sans-serif;
-    background:#f4f6f9;
-}
-header{
-    background:#0b3c5d;
-    color:#fff;
-    padding:15px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-}
-header img{
-    height:45px;
-}
-nav button{
-    margin-left:8px;
-    padding:8px 12px;
-    border:none;
-    cursor:pointer;
-    border-radius:4px;
-}
-.primary{background:#1abc9c;color:#fff;}
-.danger{background:#e74c3c;color:#fff;}
-
-.container{
-    padding:20px;
-}
-.hidden{display:none;}
-
-.card-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:15px;
-}
-.card{
-    background:#fff;
-    padding:15px;
-    border-radius:8px;
-    box-shadow:0 2px 6px rgba(0,0,0,.1);
-}
-
-.card h3{
-    margin-top:0;
-}
-
-.module-btn{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    background:#0b3c5d;
-    color:#fff;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-}
-
-input{
-    width:100%;
-    padding:10px;
-    margin:8px 0;
-}
+body{font-family:Arial;margin:0;background:#f4f6f9}
+header{background:#0b3c5d;color:#fff;padding:15px;display:flex;justify-content:space-between}
+button{padding:10px;margin:5px}
+.card{background:#fff;padding:15px;margin:10px;border-radius:8px}
+.hidden{display:none}
+input,textarea{width:100%;padding:8px;margin:5px 0}
 </style>
 </head>
 
 <body>
 
 <header>
-    <div>
-        <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/..." />
-        <strong> Grew Energy Pvt. Ltd.</strong>
-    </div>
-    <nav>
-        <button class="primary" onclick="showLogin()">Login</button>
-        <button class="primary" onclick="showRegister()">Register</button>
-        <button class="danger hidden" id="logoutBtn" onclick="logout()">Logout</button>
-    </nav>
+  <b>Grew Energy Pvt. Ltd.</b>
+  <button onclick="logout()">Logout</button>
 </header>
 
-<div class="container">
-
-<!-- LOGIN -->
-<div id="login" class="hidden">
-    <h2>Login</h2>
-    <input id="loginUser" placeholder="Username">
-    <input id="loginPass" type="password" placeholder="Password">
-    <button class="primary" onclick="login()">Login</button>
+<div id="auth">
+  <div class="card">
+    <h3>Login / Register</h3>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+  </div>
 </div>
 
-<!-- REGISTER -->
-<div id="register" class="hidden">
-    <h2>Register</h2>
-    <input id="regUser" placeholder="Username">
-    <input id="regPass" type="password" placeholder="Password">
-    <button class="primary" onclick="register()">Register</button>
-</div>
-
-<!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
-    <h2>Dashboard</h2>
-
-    <div class="card-grid">
-        <div class="card">
-            <h3>Locations</h3>
-            <p>Ahmedabad – 200</p>
-            <p>Dudu – 3000</p>
-            <p>Bhopla – 700</p>
-        </div>
-
-        <div class="card">
-            <h3>HR Module</h3>
-            <button class="module-btn" onclick="openModule('HR')">Open HR</button>
-        </div>
-
-        <div class="card">
-            <h3>Admin Module</h3>
-            <button class="module-btn" onclick="openModule('Admin')">Open Admin</button>
-        </div>
-
-        <div class="card">
-            <h3>Live Chat & Ticket</h3>
-            <button class="module-btn" onclick="openModule('Chat')">Open Chat</button>
-        </div>
-
-        <div class="card">
-            <h3>Recruitment</h3>
-            <button class="module-btn" onclick="openModule('Recruitment')">Open Recruitment</button>
-        </div>
-    </div>
+  <div class="card">
+    <h3>Dashboard</h3>
+    <button onclick="showAdmin()">Admin Panel</button>
+    <button onclick="showTickets()">Tickets</button>
+    <button onclick="showChat()">Live Chat</button>
+  </div>
 </div>
 
-<!-- MODULE PAGE -->
-<div id="modulePage" class="hidden">
-    <h2 id="moduleTitle"></h2>
-    <p>Welcome to <strong>Grew Energy Pvt. Ltd.</strong></p>
-    <p>This module is protected and requires login.</p>
-    <button class="primary" onclick="backDashboard()">Back</button>
+<div id="admin" class="hidden card">
+  <h3>Admin Panel</h3>
+  <p>Only Admin can see this</p>
 </div>
 
+<div id="tickets" class="hidden card">
+  <h3>Raise Ticket</h3>
+  <input id="subject" placeholder="Subject">
+  <textarea id="message" placeholder="Message"></textarea>
+  <button onclick="createTicket()">Submit</button>
+  <div id="ticketList"></div>
+</div>
+
+<div id="chat" class="hidden card">
+  <h3>Live Chat</h3>
+  <input id="chatMsg" placeholder="Type message">
+  <button onclick="sendMsg()">Send</button>
+  <div id="chatBox"></div>
 </div>
 
 <script>
-function showLogin(){
-    hideAll();
-    document.getElementById('login').classList.remove('hidden');
+const supabase = supabase.createClient(
+  "https://drjkjnqzldxsyhdzeoe.supabase.co",
+  "YOUR_ANON_KEY_HERE"
+);
+
+async function register(){
+  const { data, error } = await supabase.auth.signUp({
+    email: email.value,
+    password: password.value
+  });
+  alert("Registered. Check email.");
 }
 
-function showRegister(){
-    hideAll();
-    document.getElementById('register').classList.remove('hidden');
+async function login(){
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.value,
+    password: password.value
+  });
+  if(error){ alert(error.message); return;}
+  auth.classList.add("hidden");
+  dashboard.classList.remove("hidden");
 }
 
-function register(){
-    localStorage.setItem('user', regUser.value);
-    localStorage.setItem('pass', regPass.value);
-    alert("Registration Successful");
-    showLogin();
+async function logout(){
+  await supabase.auth.signOut();
+  location.reload();
 }
 
-function login(){
-    if(loginUser.value === localStorage.getItem('user') &&
-       loginPass.value === localStorage.getItem('pass')){
-        localStorage.setItem('loggedIn','true');
-        loadDashboard();
-    }else{
-        alert("Invalid Login");
-    }
+async function showAdmin(){
+  admin.classList.remove("hidden");
 }
 
-function loadDashboard(){
-    hideAll();
-    dashboard.classList.remove('hidden');
-    logoutBtn.classList.remove('hidden');
+async function createTicket(){
+  await supabase.from("tickets").insert({
+    subject: subject.value,
+    message: message.value
+  });
+  alert("Ticket created");
 }
 
-function logout(){
-    localStorage.removeItem('loggedIn');
-    hideAll();
-    logoutBtn.classList.add('hidden');
+async function showChat(){
+  chat.classList.remove("hidden");
 }
 
-function openModule(name){
-    hideAll();
-    modulePage.classList.remove('hidden');
-    moduleTitle.innerText = name + " Module";
+async function sendMsg(){
+  await supabase.from("chat_messages").insert({
+    message: chatMsg.value
+  });
 }
 
-function backDashboard(){
-    loadDashboard();
-}
-
-function hideAll(){
-    login.classList.add('hidden');
-    register.classList.add('hidden');
-    dashboard.classList.add('hidden');
-    modulePage.classList.add('hidden');
-}
-
-if(localStorage.getItem('loggedIn') === 'true'){
-    loadDashboard();
-}
+supabase.channel('chat')
+.on('postgres_changes',
+  {event:'INSERT',schema:'public',table:'chat_messages'},
+  payload=>{
+    chatBox.innerHTML += `<p>${payload.new.message}</p>`
+  }
+).subscribe();
 </script>
 
 </body>
