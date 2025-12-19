@@ -2,126 +2,162 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Grew Energy Pvt. Ltd.</title>
+<title>GrewSolar HR Portal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{font-family:Arial;margin:0;background:#f4f6f9}
-header{background:#0b3c5d;color:#fff;padding:15px;display:flex;justify-content:space-between}
-button{padding:10px;margin:5px}
-.card{background:#fff;padding:15px;margin:10px;border-radius:8px}
-.hidden{display:none}
-input,textarea{width:100%;padding:8px;margin:5px 0}
+body{font-family:Arial;background:#f4f6f8;margin:0}
+.box{max-width:420px;margin:60px auto;background:#fff;padding:25px;border-radius:8px}
+input,textarea,button{width:100%;padding:10px;margin:6px 0}
+button{background:#2e7d32;color:#fff;border:none;cursor:pointer}
+nav{background:#1b5e20;color:#fff;padding:12px;text-align:center;font-size:18px}
+.section{display:none;padding:20px}
+.chat{border:1px solid #ccc;height:200px;overflow:auto;padding:10px}
+.msg{margin:5px 0}
+.admin{color:red;font-weight:bold}
 </style>
 </head>
 
 <body>
 
-<header>
-  <b>Grew Energy Pvt. Ltd.</b>
-  <button onclick="logout()">Logout</button>
-</header>
+<nav>GrewSolar Energy Pvt. Ltd. – HR System</nav>
 
-<div id="auth">
-  <div class="card">
-    <h3>Login / Register</h3>
-    <input id="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register</button>
-  </div>
+<!-- LOGIN -->
+<div class="box" id="loginBox">
+<h2>Login / Register</h2>
+<input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<button onclick="register()">Register</button>
+<p id="msg"></p>
 </div>
 
-<div id="dashboard" class="hidden">
-  <div class="card">
-    <h3>Dashboard</h3>
-    <button onclick="showAdmin()">Admin Panel</button>
-    <button onclick="showTickets()">Tickets</button>
-    <button onclick="showChat()">Live Chat</button>
-  </div>
-</div>
+<!-- DASHBOARD -->
+<div class="section" id="dashboard">
+<h2>Dashboard</h2>
+<button onclick="logout()">Logout</button>
 
-<div id="admin" class="hidden card">
-  <h3>Admin Panel</h3>
-  <p>Only Admin can see this</p>
-</div>
+<h3>Create Ticket</h3>
+<input id="tTitle" placeholder="Title">
+<textarea id="tDesc" placeholder="Description"></textarea>
+<button onclick="createTicket()">Submit Ticket</button>
 
-<div id="tickets" class="hidden card">
-  <h3>Raise Ticket</h3>
-  <input id="subject" placeholder="Subject">
-  <textarea id="message" placeholder="Message"></textarea>
-  <button onclick="createTicket()">Submit</button>
-  <div id="ticketList"></div>
-</div>
+<h3>Your Tickets</h3>
+<ul id="ticketList"></ul>
 
-<div id="chat" class="hidden card">
-  <h3>Live Chat</h3>
-  <input id="chatMsg" placeholder="Type message">
-  <button onclick="sendMsg()">Send</button>
-  <div id="chatBox"></div>
+<h3>Live Chat</h3>
+<div class="chat" id="chatBox"></div>
+<input id="chatMsg" placeholder="Message">
+<button onclick="sendChat()">Send</button>
+
+<h3 id="adminPanel" class="admin" style="display:none">
+ADMIN PANEL ENABLED
+</h3>
 </div>
 
 <script>
-const supabase = supabase.createClient(
+/* ✅ CORRECT SUPABASE CONFIG */
+const supabase = window.supabase.createClient(
   "https://drjkjnqzldxsyhdzeoe.supabase.co",
-  "YOUR_ANON_KEY_HERE"
+  "sb_publishable_TJOK8wFfjaW6vKsoNsNGZw_QzkZJGlo"
 );
 
+/* REGISTER */
 async function register(){
-  const { data, error } = await supabase.auth.signUp({
+  msg.innerText="Registering...";
+  const { error } = await supabase.auth.signUp({
     email: email.value,
     password: password.value
   });
-  alert("Registered. Check email.");
+  msg.innerText = error ? error.message : "Registered! Please Login";
 }
 
+/* LOGIN */
 async function login(){
-  const { data, error } = await supabase.auth.signInWithPassword({
+  msg.innerText="Logging in...";
+  const { error } = await supabase.auth.signInWithPassword({
     email: email.value,
     password: password.value
   });
-  if(error){ alert(error.message); return;}
-  auth.classList.add("hidden");
-  dashboard.classList.remove("hidden");
+  if(error){ msg.innerText = error.message; return; }
+  loginBox.style.display="none";
+  dashboard.style.display="block";
+  loadRole();
+  loadTickets();
+  loadChat();
 }
 
+/* LOGOUT */
 async function logout(){
   await supabase.auth.signOut();
   location.reload();
 }
 
-async function showAdmin(){
-  admin.classList.remove("hidden");
-}
+/* ROLE */
+async function loadRole(){
+  const { data:{user} } = await supabase.auth.getUser();
+  const { data } = await supabase
+    .from("user_roles")
+    .select("*")
+    .eq("user_id",user.id)
+    .single();
 
-async function createTicket(){
-  await supabase.from("tickets").insert({
-    subject: subject.value,
-    message: message.value
-  });
-  alert("Ticket created");
-}
-
-async function showChat(){
-  chat.classList.remove("hidden");
-}
-
-async function sendMsg(){
-  await supabase.from("chat_messages").insert({
-    message: chatMsg.value
-  });
-}
-
-supabase.channel('chat')
-.on('postgres_changes',
-  {event:'INSERT',schema:'public',table:'chat_messages'},
-  payload=>{
-    chatBox.innerHTML += `<p>${payload.new.message}</p>`
+  if(!data){
+    await supabase.from("user_roles")
+    .insert({ user_id:user.id, role:"user" });
   }
-).subscribe();
-</script>
 
+  if(data?.role==="admin"){
+    adminPanel.style.display="block";
+  }
+}
+
+/* TICKETS */
+async function createTicket(){
+  const { data:{user} } = await supabase.auth.getUser();
+  await supabase.from("tickets").insert({
+    user_id:user.id,
+    title:tTitle.value,
+    description:tDesc.value
+  });
+  loadTickets();
+}
+
+async function loadTickets(){
+  const { data:{user} } = await supabase.auth.getUser();
+  const { data } = await supabase
+    .from("tickets")
+    .select("*")
+    .eq("user_id",user.id);
+
+  ticketList.innerHTML="";
+  data.forEach(t=>{
+    ticketList.innerHTML+=`<li>${t.title} - ${t.status}</li>`;
+  });
+}
+
+/* CHAT */
+async function sendChat(){
+  const { data:{user} } = await supabase.auth.getUser();
+  await supabase.from("chat_messages").insert({
+    user_email:user.email,
+    message:chatMsg.value
+  });
+  chatMsg.value="";
+}
+
+async function loadChat(){
+  supabase.channel("chat")
+  .on("postgres_changes",
+    {event:"INSERT",schema:"public",table:"chat_messages"},
+    payload=>{
+      chatBox.innerHTML+=
+      `<div class="msg"><b>${payload.new.user_email}:</b> ${payload.new.message}</div>`;
+    })
+  .subscribe();
+}
+</script>
 </body>
 </html>
