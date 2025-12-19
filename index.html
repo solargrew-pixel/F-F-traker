@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Grew Energy Pvt. Ltd.</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f4f6f9;
+}
+header{
+    background:#0b3c5d;
+    color:#fff;
+    padding:15px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+header img{
+    height:45px;
+}
+nav button{
+    margin-left:8px;
+    padding:8px 12px;
+    border:none;
+    cursor:pointer;
+    border-radius:4px;
+}
+.primary{background:#1abc9c;color:#fff;}
+.danger{background:#e74c3c;color:#fff;}
+
+.container{
+    padding:20px;
+}
+.hidden{display:none;}
+
+.card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+}
+.card{
+    background:#fff;
+    padding:15px;
+    border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+
+.card h3{
+    margin-top:0;
+}
+
+.module-btn{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    background:#0b3c5d;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin:8px 0;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div>
+        <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/..." />
+        <strong> Grew Energy Pvt. Ltd.</strong>
+    </div>
+    <nav>
+        <button class="primary" onclick="showLogin()">Login</button>
+        <button class="primary" onclick="showRegister()">Register</button>
+        <button class="danger hidden" id="logoutBtn" onclick="logout()">Logout</button>
+    </nav>
+</header>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div id="login" class="hidden">
+    <h2>Login</h2>
+    <input id="loginUser" placeholder="Username">
+    <input id="loginPass" type="password" placeholder="Password">
+    <button class="primary" onclick="login()">Login</button>
+</div>
+
+<!-- REGISTER -->
+<div id="register" class="hidden">
+    <h2>Register</h2>
+    <input id="regUser" placeholder="Username">
+    <input id="regPass" type="password" placeholder="Password">
+    <button class="primary" onclick="register()">Register</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+    <h2>Dashboard</h2>
+
+    <div class="card-grid">
+        <div class="card">
+            <h3>Locations</h3>
+            <p>Ahmedabad – 200</p>
+            <p>Dudu – 3000</p>
+            <p>Bhopla – 700</p>
+        </div>
+
+        <div class="card">
+            <h3>HR Module</h3>
+            <button class="module-btn" onclick="openModule('HR')">Open HR</button>
+        </div>
+
+        <div class="card">
+            <h3>Admin Module</h3>
+            <button class="module-btn" onclick="openModule('Admin')">Open Admin</button>
+        </div>
+
+        <div class="card">
+            <h3>Live Chat & Ticket</h3>
+            <button class="module-btn" onclick="openModule('Chat')">Open Chat</button>
+        </div>
+
+        <div class="card">
+            <h3>Recruitment</h3>
+            <button class="module-btn" onclick="openModule('Recruitment')">Open Recruitment</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODULE PAGE -->
+<div id="modulePage" class="hidden">
+    <h2 id="moduleTitle"></h2>
+    <p>Welcome to <strong>Grew Energy Pvt. Ltd.</strong></p>
+    <p>This module is protected and requires login.</p>
+    <button class="primary" onclick="backDashboard()">Back</button>
+</div>
+
+</div>
+
+<script>
+function showLogin(){
+    hideAll();
+    document.getElementById('login').classList.remove('hidden');
+}
+
+function showRegister(){
+    hideAll();
+    document.getElementById('register').classList.remove('hidden');
+}
+
+function register(){
+    localStorage.setItem('user', regUser.value);
+    localStorage.setItem('pass', regPass.value);
+    alert("Registration Successful");
+    showLogin();
+}
+
+function login(){
+    if(loginUser.value === localStorage.getItem('user') &&
+       loginPass.value === localStorage.getItem('pass')){
+        localStorage.setItem('loggedIn','true');
+        loadDashboard();
+    }else{
+        alert("Invalid Login");
+    }
+}
+
+function loadDashboard(){
+    hideAll();
+    dashboard.classList.remove('hidden');
+    logoutBtn.classList.remove('hidden');
+}
+
+function logout(){
+    localStorage.removeItem('loggedIn');
+    hideAll();
+    logoutBtn.classList.add('hidden');
+}
+
+function openModule(name){
+    hideAll();
+    modulePage.classList.remove('hidden');
+    moduleTitle.innerText = name + " Module";
+}
+
+function backDashboard(){
+    loadDashboard();
+}
+
+function hideAll(){
+    login.classList.add('hidden');
+    register.classList.add('hidden');
+    dashboard.classList.add('hidden');
+    modulePage.classList.add('hidden');
+}
+
+if(localStorage.getItem('loggedIn') === 'true'){
+    loadDashboard();
+}
+</script>
+
+</body>
+</html>
