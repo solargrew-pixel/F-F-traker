@@ -1,0 +1,2725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding Tracker & Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FIREBASE SCRIPTS ADDED HERE -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #0b7dda;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e68a00;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        .btn-clear {
+            background: #9e9e9e;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #757575;
+        }
+
+        /* Dashboard Summary Cards */
+        .dashboard-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 25px;
+            background: #f8f9fa;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .summary-card i {
+            font-size: 2.5rem;
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .total-candidates i { background: #2196F3; }
+        .selected i { background: #4CAF50; }
+        .backout i { background: #f44336; }
+        .vacancies i { background: #ff9800; }
+        .joining i { background: #9c27b0; }
+
+        .summary-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .summary-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        .filter-group select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            min-width: 150px;
+            background: white;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            padding: 0 20px;
+            border-bottom: 1px solid #dee2e6;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        /* Table Styles */
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+        }
+
+        .data-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .data-table tbody tr {
+            border-bottom: 1px solid #eee;
+            transition: background 0.3s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            color: #555;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-applied { background: #e3f2fd; color: #1976d2; }
+        .status-interview { background: #fff3e0; color: #f57c00; }
+        .status-selected { background: #e8f5e9; color: #388e3c; }
+        .status-joined { background: #f3e5f5; color: #7b1fa2; }
+        .status-backout { background: #ffebee; color: #d32f2f; }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Charts */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-card h3 {
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-card canvas {
+            max-height: 300px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #ffeb3b;
+        }
+
+        .modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            max-height: calc(90vh - 80px);
+        }
+
+        /* Form Styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group.required label::after {
+            content: " *";
+            color: #f44336;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        /* Settings Panel Styles */
+        .settings-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .settings-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .settings-section h3 {
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .settings-item {
+            background: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-item button {
+            background: none;
+            border: none;
+            color: #f44336;
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+
+        .settings-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .settings-input-group input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+        }
+
+        .settings-input-group button {
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .dashboard-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .dashboard-summary {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab-btn {
+                flex: 1;
+                justify-content: center;
+                padding: 12px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animation for table rows */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .data-table tbody tr {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success { background: #4CAF50; }
+        .notification.error { background: #f44336; }
+        .notification.info { background: #2196F3; }
+        .notification.warning { background: #ff9800; }
+
+        /* Auto-save indicator */
+        .auto-save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .auto-save-indicator.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-user-tie"></i>
+                <h1>Onboarding Tracker</h1>
+            </div>
+            <div class="header-controls">
+                <button class="btn btn-primary" onclick="showAddCandidateModal()">
+                    <i class="fas fa-plus"></i> Add Candidate
+                </button>
+                <button class="btn btn-secondary" onclick="showAddVacancyModal()">
+                    <i class="fas fa-briefcase"></i> Add Vacancy
+                </button>
+                <!-- SYNC BUTTON ADDED HERE -->
+                <button class="btn btn-info" onclick="syncWithFirebase()" title="Sync with other users">
+                    <i class="fas fa-sync"></i> Sync
+                </button>
+                <button class="btn btn-info" onclick="showSettingsModal()">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button class="btn btn-warning" onclick="exportToExcel()">
+                    <i class="fas fa-file-export"></i> Export
+                </button>
+            </div>
+        </header>
+
+        <!-- Dashboard Summary Cards -->
+        <div class="dashboard-summary">
+            <div class="summary-card total-candidates">
+                <i class="fas fa-users"></i>
+                <div>
+                    <h3 id="totalCandidates">0</h3>
+                    <p>Total Candidates</p>
+                </div>
+            </div>
+            <div class="summary-card selected">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                    <h3 id="selectedCandidates">0</h3>
+                    <p>Selected</p>
+                </div>
+            </div>
+            <div class="summary-card backout">
+                <i class="fas fa-user-slash"></i>
+                <div>
+                    <h3 id="backoutCandidates">0</h3>
+                    <p>Backout</p>
+                </div>
+            </div>
+            <div class="summary-card vacancies">
+                <i class="fas fa-briefcase"></i>
+                <div>
+                    <h3 id="openVacancies">0</h3>
+                    <p>Open Vacancies</p>
+                </div>
+            </div>
+            <div class="summary-card joining">
+                <i class="fas fa-calendar-check"></i>
+                <div>
+                    <h3 id="pendingJoining">0</h3>
+                    <p>Pending Joining</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <label><i class="fas fa-user"></i> Recruiter:</label>
+                <select id="filterRecruiter" onchange="filterData()">
+                    <option value="all">All Recruiters</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-calendar"></i> Year:</label>
+                <select id="filterYear" onchange="filterData()">
+                    <option value="all">All Years</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-building"></i> Department:</label>
+                <select id="filterDepartment" onchange="filterData()">
+                    <option value="all">All Departments</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-user-tag"></i> Designation:</label>
+                <select id="filterDesignation" onchange="filterData()">
+                    <option value="all">All Designations</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-filter"></i> Status:</label>
+                <select id="filterStatus" onchange="filterData()">
+                    <option value="all">All Status</option>
+                </select>
+            </div>
+            <button class="btn btn-clear" onclick="clearFilters()">
+                <i class="fas fa-times"></i> Clear Filters
+            </button>
+        </div>
+
+        <!-- Main Content Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('candidates')">
+                <i class="fas fa-user-friends"></i> Candidates
+            </button>
+            <button class="tab-btn" onclick="showTab('backout')">
+                <i class="fas fa-user-slash"></i> Backout Candidates
+            </button>
+            <button class="tab-btn" onclick="showTab('vacancies')">
+                <i class="fas fa-briefcase"></i> Vacancies
+            </button>
+            <button class="tab-btn" onclick="showTab('analytics')">
+                <i class="fas fa-chart-bar"></i> Analytics
+            </button>
+        </div>
+
+        <!-- Candidates Table -->
+        <div id="candidatesTab" class="tab-content active">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Recruiter</th>
+                            <th>Candidate Name</th>
+                            <th>Email</th>
+                            <th>Current Designation</th>
+                            <th>Current CTC</th>
+                            <th>Company</th>
+                            <th>Apply For</th>
+                            <th>Hike %</th>
+                            <th>New CTC</th>
+                            <th>Status</th>
+                            <th>DOJ</th>
+                            <th>Location</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="candidatesTable">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Backout Candidates Table -->
+        <div id="backoutTab" class="tab-content">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Recruiter</th>
+                            <th>Candidate Name</th>
+                            <th>Email</th>
+                            <th>Designation Applied</th>
+                            <th>Backout Date</th>
+                            <th>Backout Reason</th>
+                            <th>Company</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="backoutTable">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Vacancies Table -->
+        <div id="vacanciesTab" class="tab-content">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Total Vacancies</th>
+                            <th>Filled</th>
+                            <th>Remaining</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                            <th>Recruiter</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vacanciesTable">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Analytics Dashboard -->
+        <div id="analyticsTab" class="tab-content">
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3><i class="fas fa-chart-pie"></i> Vacancy Status</h3>
+                    <canvas id="vacancyChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3><i class="fas fa-chart-line"></i> Monthly Hiring Trend</h3>
+                    <canvas id="hiringChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3><i class="fas fa-chart-bar"></i> Recruiter Performance</h3>
+                    <canvas id="recruiterChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3><i class="fas fa-chart-pie"></i> Status Distribution</h3>
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="addCandidateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Candidate</h2>
+                <button class="close-btn" onclick="closeModal('addCandidateModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="candidateForm" onsubmit="addCandidate(event)">
+                    <div class="form-row">
+                        <div class="form-group required">
+                            <label>Recruiter Name</label>
+                            <select id="recruiterName" required>
+                                <option value="">Select Recruiter</option>
+                            </select>
+                        </div>
+                        <div class="form-group required">
+                            <label>Candidate Name</label>
+                            <input type="text" id="candidateName" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group required">
+                            <label>Email ID</label>
+                            <input type="email" id="candidateEmail" required>
+                        </div>
+                        <div class="form-group required">
+                            <label>Current Designation</label>
+                            <input type="text" id="currentDesignation" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group required">
+                            <label>Current CTC (LPA)</label>
+                            <input type="number" id="currentCTC" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Hike %</label>
+                            <input type="number" id="hikePercentage" step="0.01" value="0" oninput="calculateNewCTC()">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group required">
+                            <label>Current Company</label>
+                            <input type="text" id="currentCompany" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Company Location</label>
+                            <input type="text" id="companyLocation">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group required">
+                            <label>Apply For Designation</label>
+                            <select id="applyForDesignation" required>
+                                <option value="">Select Designation</option>
+                            </select>
+                        </div>
+                        <div class="form-group required">
+                            <label>Status</label>
+                            <select id="candidateStatus" required onchange="toggleDOJField()">
+                                <option value="">Select Status</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row" id="dojFieldContainer" style="display: none;">
+                        <div class="form-group required">
+                            <label>Date of Joining</label>
+                            <input type="date" id="dateOfJoining">
+                        </div>
+                        <div class="form-group">
+                            <label>Location for Join</label>
+                            <select id="joinLocation">
+                                <option value="">Select Location</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('addCandidateModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Candidate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="addVacancyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Vacancy</h2>
+                <button class="close-btn" onclick="closeModal('addVacancyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="vacancyForm" onsubmit="addVacancy(event)">
+                    <div class="form-row">
+                        <div class="form-group required">
+                            <label>Company Name</label>
+                            <input type="text" id="vacancyCompany" required>
+                        </div>
+                        <div class="form-group required">
+                            <label>Department</label>
+                            <select id="vacancyDepartment" required>
+                                <option value="">Select Department</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group required">
+                            <label>Designation</label>
+                            <input type="text" id="vacancyDesignation" required>
+                        </div>
+                        <div class="form-group required">
+                            <label>Total Vacancies</label>
+                            <input type="number" id="totalVacancies" required min="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group required">
+                            <label>Location</label>
+                            <select id="vacancyLocation" required>
+                                <option value="">Select Location</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Recruiter Assigned</label>
+                            <select id="vacancyRecruiter">
+                                <option value="">Select Recruiter</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('addVacancyModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Vacancy</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-cog"></i> Settings</h2>
+                <button class="close-btn" onclick="closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-panel">
+                    <!-- Recruiter Settings -->
+                    <div class="settings-section">
+                        <h3><i class="fas fa-user"></i> Manage Recruiters</h3>
+                        <div class="settings-list" id="recruitersList">
+                            <!-- Recruiters will be loaded here -->
+                        </div>
+                        <div class="settings-input-group">
+                            <input type="text" id="newRecruiter" placeholder="Enter new recruiter name">
+                            <button onclick="addRecruiter()">Add Recruiter</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Department Settings -->
+                    <div class="settings-section">
+                        <h3><i class="fas fa-building"></i> Manage Departments</h3>
+                        <div class="settings-list" id="departmentsList">
+                            <!-- Departments will be loaded here -->
+                        </div>
+                        <div class="settings-input-group">
+                            <input type="text" id="newDepartment" placeholder="Enter new department">
+                            <button onclick="addDepartment()">Add Department</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Designation Settings -->
+                    <div class="settings-section">
+                        <h3><i class="fas fa-user-tag"></i> Manage Designations</h3>
+                        <div class="settings-list" id="designationsList">
+                            <!-- Designations will be loaded here -->
+                        </div>
+                        <div class="settings-input-group">
+                            <input type="text" id="newDesignation" placeholder="Enter new designation">
+                            <button onclick="addDesignation()">Add Designation</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Settings -->
+                    <div class="settings-section">
+                        <h3><i class="fas fa-exchange-alt"></i> Manage Candidate Status</h3>
+                        <div class="settings-list" id="statusesList">
+                            <!-- Statuses will be loaded here -->
+                        </div>
+                        <div class="settings-input-group">
+                            <input type="text" id="newStatus" placeholder="Enter new status">
+                            <button onclick="addStatus()">Add Status</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Location Settings -->
+                    <div class="settings-section">
+                        <h3><i class="fas fa-map-marker-alt"></i> Manage Locations</h3>
+                        <div class="settings-list" id="locationsList">
+                            <!-- Locations will be loaded here -->
+                        </div>
+                        <div class="settings-input-group">
+                            <input type="text" id="newLocation" placeholder="Enter new location">
+                            <button onclick="addLocation()">Add Location</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('settingsModal')">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Send Email</h2>
+                <button class="close-btn" onclick="closeModal('emailModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>To:</label>
+                    <input type="email" id="emailTo" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Subject:</label>
+                    <input type="text" id="emailSubject" value="Regarding Your Application">
+                </div>
+                <div class="form-group">
+                    <label>Email Type:</label>
+                    <select id="emailType" onchange="updateEmailTemplate()">
+                        <option value="selected">Selection Email</option>
+                        <option value="rejected">Rejection Email</option>
+                        <option value="joining">Joining Details</option>
+                        <option value="backout">Backout Acknowledgment</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Message:</label>
+                    <textarea id="emailMessage" rows="8"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('emailModal')">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="sendEmail()">Send Email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-save indicator -->
+    <div id="autoSaveIndicator" class="auto-save-indicator">
+        <i class="fas fa-save"></i>
+        <span>Data Saved</span>
+    </div>
+
+    <script>
+        // ==================== FIREBASE CONFIGURATION ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDI-YE4bdlqVRPXL-twy4JdunkhUKwaaE4",
+            authDomain: "grewsolarhrdept.firebaseapp.com",
+            projectId: "grewsolarhrdept",
+            storageBucket: "grewsolarhrdept.firebasestorage.app",
+            messagingSenderId: "534464630996",
+            appId: "1:534464630996:web:b5e20a51b5cef339d06b41",
+            measurementId: "G-55PPN689RW"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ==================== DATA INITIALIZATION ====================
+        let candidates = [];
+        let backoutCandidates = [];
+        let vacancies = [];
+        
+        // Settings data
+        let settings = {
+            recruiters: ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown'],
+            departments: ['IT', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations'],
+            designations: ['Software Engineer', 'Senior Software Engineer', 'HR Executive', 'HR Manager', 'Finance Analyst', 'Marketing Executive'],
+            statuses: ['Applied', 'Selected for Interview', 'Interview Passout', 'Selected', 'Joined', 'Backout'],
+            locations: ['DUDU', 'HO', 'BHOPAL']
+        };
+        
+        let years = [];
+        let autoSaveTimer = null;
+
+        // ==================== FIREBASE FUNCTIONS ====================
+        
+        // Load data from Firebase
+        async function loadDataFromFirebase() {
+            try {
+                // Load candidates
+                const candidatesDoc = await db.collection('onboardingData').doc('candidates').get();
+                if (candidatesDoc.exists) {
+                    candidates = candidatesDoc.data().data || [];
+                }
+                
+                // Load backout candidates
+                const backoutDoc = await db.collection('onboardingData').doc('backout').get();
+                if (backoutDoc.exists) {
+                    backoutCandidates = backoutDoc.data().data || [];
+                }
+                
+                // Load vacancies
+                const vacanciesDoc = await db.collection('onboardingData').doc('vacancies').get();
+                if (vacanciesDoc.exists) {
+                    vacancies = vacanciesDoc.data().data || [];
+                }
+                
+                // Load settings
+                const settingsDoc = await db.collection('onboardingData').doc('settings').get();
+                if (settingsDoc.exists) {
+                    settings = settingsDoc.data();
+                }
+                
+                console.log('Data loaded from Firebase successfully');
+                showNotification('Data loaded from server', 'success');
+            } catch (error) {
+                console.error('Error loading from Firebase:', error);
+                showNotification('Error loading data from server', 'error');
+                
+                // Fallback to localStorage
+                candidates = JSON.parse(localStorage.getItem('onboardingCandidates')) || [];
+                backoutCandidates = JSON.parse(localStorage.getItem('backoutCandidates')) || [];
+                vacancies = JSON.parse(localStorage.getItem('vacancies')) || [];
+                const savedSettings = JSON.parse(localStorage.getItem('onboardingSettings'));
+                if (savedSettings) settings = savedSettings;
+            }
+        }
+
+        // Set up real-time listeners
+        function setupRealtimeListeners() {
+            // Listen for candidate updates
+            db.collection('onboardingData').doc('candidates')
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const newData = doc.data().data || [];
+                        if (JSON.stringify(candidates) !== JSON.stringify(newData)) {
+                            candidates = newData;
+                            renderCandidatesTable();
+                            updateDashboard();
+                            updateCharts();
+                            showNotification('Candidates updated in real-time!', 'info');
+                        }
+                    }
+                });
+            
+            // Listen for vacancy updates
+            db.collection('onboardingData').doc('vacancies')
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const newData = doc.data().data || [];
+                        if (JSON.stringify(vacancies) !== JSON.stringify(newData)) {
+                            vacancies = newData;
+                            renderVacanciesTable();
+                            updateDashboard();
+                            updateFilters();
+                            updateCharts();
+                        }
+                    }
+                });
+            
+            // Listen for backout updates
+            db.collection('onboardingData').doc('backout')
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const newData = doc.data().data || [];
+                        if (JSON.stringify(backoutCandidates) !== JSON.stringify(newData)) {
+                            backoutCandidates = newData;
+                            renderBackoutTable();
+                            updateDashboard();
+                        }
+                    }
+                });
+        }
+
+        // Save all data to Firebase
+        async function saveAllDataToFirebase() {
+            try {
+                await db.collection('onboardingData').doc('candidates').set({
+                    data: candidates,
+                    lastUpdated: new Date().toISOString()
+                });
+                
+                await db.collection('onboardingData').doc('backout').set({
+                    data: backoutCandidates,
+                    lastUpdated: new Date().toISOString()
+                });
+                
+                await db.collection('onboardingData').doc('vacancies').set({
+                    data: vacancies,
+                    lastUpdated: new Date().toISOString()
+                });
+                
+                await db.collection('onboardingData').doc('settings').set(settings);
+                
+                console.log('All data saved to Firebase');
+                showAutoSaveIndicator();
+            } catch (error) {
+                console.error('Error saving to Firebase:', error);
+                showNotification('Error saving to server', 'error');
+                
+                // Fallback to localStorage
+                localStorage.setItem('onboardingCandidates', JSON.stringify(candidates));
+                localStorage.setItem('backoutCandidates', JSON.stringify(backoutCandidates));
+                localStorage.setItem('vacancies', JSON.stringify(vacancies));
+                localStorage.setItem('onboardingSettings', JSON.stringify(settings));
+            }
+        }
+
+        // Modified save functions
+        async function saveCandidates() {
+            try {
+                await db.collection('onboardingData').doc('candidates').set({
+                    data: candidates,
+                    lastUpdated: new Date().toISOString()
+                });
+                showAutoSaveIndicator();
+            } catch (error) {
+                console.error('Error saving candidates:', error);
+                localStorage.setItem('onboardingCandidates', JSON.stringify(candidates));
+            }
+        }
+
+        async function saveBackoutCandidates() {
+            try {
+                await db.collection('onboardingData').doc('backout').set({
+                    data: backoutCandidates,
+                    lastUpdated: new Date().toISOString()
+                });
+                showAutoSaveIndicator();
+            } catch (error) {
+                console.error('Error saving backout candidates:', error);
+                localStorage.setItem('backoutCandidates', JSON.stringify(backoutCandidates));
+            }
+        }
+
+        async function saveVacancies() {
+            try {
+                await db.collection('onboardingData').doc('vacancies').set({
+                    data: vacancies,
+                    lastUpdated: new Date().toISOString()
+                });
+                showAutoSaveIndicator();
+            } catch (error) {
+                console.error('Error saving vacancies:', error);
+                localStorage.setItem('vacancies', JSON.stringify(vacancies));
+            }
+        }
+
+        async function saveSettings() {
+            try {
+                await db.collection('onboardingData').doc('settings').set(settings);
+                showAutoSaveIndicator();
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                localStorage.setItem('onboardingSettings', JSON.stringify(settings));
+            }
+        }
+
+        // Sync function
+        async function syncWithFirebase() {
+            showNotification('Syncing with server...', 'info');
+            await saveAllDataToFirebase();
+            await loadDataFromFirebase();
+            showNotification('Synced successfully!', 'success');
+        }
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Generate years for filter (current year - 2 to current year + 2)
+            const currentYear = new Date().getFullYear();
+            for (let year = currentYear - 2; year <= currentYear + 2; year++) {
+                years.push(year);
+            }
+            
+            // Load data from Firebase
+            await loadDataFromFirebase();
+            
+            // If no data in Firebase, load sample data
+            if (candidates.length === 0 && vacancies.length === 0) {
+                loadInitialData();
+                await saveAllDataToFirebase();
+            }
+            
+            renderCandidatesTable();
+            renderBackoutTable();
+            renderVacanciesTable();
+            updateDashboard();
+            updateFilters();
+            initializeCharts();
+            loadSettingsLists();
+            
+            // Set up real-time listeners
+            setupRealtimeListeners();
+            
+            // Auto-save indicator
+            showAutoSaveIndicator();
+            
+            // Show welcome message
+            if (candidates.length === 0) {
+                showNotification('Welcome to Onboarding Tracker! Add your first candidate to get started.', 'info');
+            }
+        });
+
+        // ==================== EXISTING FUNCTIONS (UPDATED) ====================
+
+        // Auto-save indicator
+        function showAutoSaveIndicator() {
+            const indicator = document.getElementById('autoSaveIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        // Load initial sample data
+        function loadInitialData() {
+            if (candidates.length === 0) {
+                candidates = [
+                    {
+                        id: Date.now(),
+                        recruiter: 'John Doe',
+                        name: 'Alex Johnson',
+                        email: 'alex@example.com',
+                        currentDesignation: 'Software Engineer',
+                        currentCTC: 12,
+                        currentCompany: 'Tech Corp',
+                        companyLocation: 'Bangalore',
+                        applyFor: 'Senior Software Engineer',
+                        hike: 30,
+                        afterHikeCTC: 15.6,
+                        status: 'Selected',
+                        interviewDate: '2024-01-15',
+                        doj: '2024-02-01',
+                        location: 'BHOPAL',
+                        dateCreated: new Date().toISOString()
+                    },
+                    {
+                        id: Date.now() + 1,
+                        recruiter: 'Jane Smith',
+                        name: 'Maria Garcia',
+                        email: 'maria@example.com',
+                        currentDesignation: 'HR Executive',
+                        currentCTC: 8,
+                        currentCompany: 'HR Solutions',
+                        companyLocation: 'Mumbai',
+                        applyFor: 'HR Manager',
+                        hike: 25,
+                        afterHikeCTC: 10,
+                        status: 'Interview Passout',
+                        interviewDate: '2024-01-20',
+                        doj: '',
+                        location: '',
+                        dateCreated: new Date().toISOString()
+                    }
+                ];
+            }
+            
+            if (vacancies.length === 0) {
+                vacancies = [
+                    {
+                        id: Date.now(),
+                        company: 'ABC Corp',
+                        department: 'IT',
+                        designation: 'Senior Software Engineer',
+                        total: 5,
+                        filled: 1,
+                        remaining: 4,
+                        status: 'Open',
+                        location: 'BHOPAL',
+                        recruiter: 'John Doe',
+                        targetDate: '2024-03-31'
+                    },
+                    {
+                        id: Date.now() + 1,
+                        company: 'XYZ Ltd',
+                        department: 'HR',
+                        designation: 'HR Manager',
+                        total: 2,
+                        filled: 0,
+                        remaining: 2,
+                        status: 'Open',
+                        location: 'HO',
+                        recruiter: 'Jane Smith',
+                        targetDate: '2024-02-28'
+                    }
+                ];
+            }
+        }
+
+        // Render tables
+        function renderCandidatesTable() {
+            const tableBody = document.getElementById('candidatesTable');
+            const filteredCandidates = getFilteredCandidates();
+            
+            tableBody.innerHTML = filteredCandidates.map((candidate, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${candidate.recruiter}</td>
+                    <td>${candidate.name}</td>
+                    <td>${candidate.email}</td>
+                    <td>${candidate.currentDesignation}</td>
+                    <td>₹${candidate.currentCTC} LPA</td>
+                    <td>${candidate.currentCompany}</td>
+                    <td>${candidate.applyFor}</td>
+                    <td>${candidate.hike ? candidate.hike + '%' : '-'}</td>
+                    <td>${candidate.afterHikeCTC ? '₹' + candidate.afterHikeCTC.toFixed(2) + ' LPA' : '-'}</td>
+                    <td><span class="status-badge status-${candidate.status.toLowerCase().replace(' ', '-')}">${candidate.status}</span></td>
+                    <td>${candidate.doj || '-'}</td>
+                    <td>${candidate.location || '-'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="editCandidate(${candidate.id})" style="background: #2196F3; color: white;">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="action-btn" onclick="changeStatus(${candidate.id})" style="background: #4CAF50; color: white;">
+                                <i class="fas fa-exchange-alt"></i> Status
+                            </button>
+                            <button class="action-btn" onclick="sendEmailModal('${candidate.email}', '${candidate.name}')" style="background: #9c27b0; color: white;">
+                                <i class="fas fa-envelope"></i> Email
+                            </button>
+                            <button class="action-btn" onclick="moveToBackout(${candidate.id})" style="background: #f44336; color: white;">
+                                <i class="fas fa-user-slash"></i> Backout
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderBackoutTable() {
+            const tableBody = document.getElementById('backoutTable');
+            
+            const filteredBackout = backoutCandidates.filter(candidate => {
+                const recruiterFilter = document.getElementById('filterRecruiter').value;
+                const yearFilter = document.getElementById('filterYear').value;
+                
+                if (recruiterFilter !== 'all' && candidate.recruiter !== recruiterFilter) return false;
+                if (yearFilter !== 'all') {
+                    const year = new Date(candidate.backoutDate).getFullYear().toString();
+                    if (year !== yearFilter) return false;
+                }
+                
+                return true;
+            });
+            
+            tableBody.innerHTML = filteredBackout.map((candidate, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${candidate.recruiter}</td>
+                    <td>${candidate.name}</td>
+                    <td>${candidate.email}</td>
+                    <td>${candidate.applyFor}</td>
+                    <td>${new Date(candidate.backoutDate).toLocaleDateString()}</td>
+                    <td>${candidate.backoutReason || 'Not specified'}</td>
+                    <td>${candidate.currentCompany}</td>
+                    <td>
+                        <button class="action-btn" onclick="sendEmailModal('${candidate.email}', '${candidate.name}')" style="background: #9c27b0; color: white;">
+                            <i class="fas fa-envelope"></i> Email
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderVacanciesTable() {
+            const tableBody = document.getElementById('vacanciesTable');
+            
+            tableBody.innerHTML = vacancies.map(vacancy => `
+                <tr>
+                    <td>${vacancy.company}</td>
+                    <td>${vacancy.department}</td>
+                    <td>${vacancy.designation}</td>
+                    <td>${vacancy.total}</td>
+                    <td>${vacancy.filled}</td>
+                    <td>${vacancy.remaining}</td>
+                    <td>
+                        <span class="status-badge ${vacancy.status === 'Filled' ? 'status-joined' : 'status-applied'}">
+                            ${vacancy.status}
+                        </span>
+                    </td>
+                    <td>${vacancy.location}</td>
+                    <td>${vacancy.recruiter}</td>
+                    <td>
+                        <button class="action-btn" onclick="editVacancy(${vacancy.id})" style="background: #2196F3; color: white;">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn" onclick="deleteVacancy(${vacancy.id})" style="background: #f44336; color: white;">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Filter functions
+        function getFilteredCandidates() {
+            const recruiterFilter = document.getElementById('filterRecruiter').value;
+            const yearFilter = document.getElementById('filterYear').value;
+            const deptFilter = document.getElementById('filterDepartment').value;
+            const desigFilter = document.getElementById('filterDesignation').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            
+            return candidates.filter(candidate => {
+                if (recruiterFilter !== 'all' && candidate.recruiter !== recruiterFilter) return false;
+                if (yearFilter !== 'all') {
+                    const year = new Date(candidate.dateCreated).getFullYear().toString();
+                    if (year !== yearFilter) return false;
+                }
+                if (statusFilter !== 'all' && candidate.status !== statusFilter) return false;
+                
+                // Check if candidate's applied designation matches filter
+                if (desigFilter !== 'all' && candidate.applyFor !== desigFilter) return false;
+                
+                // Check department from vacancy
+                if (deptFilter !== 'all') {
+                    const vacancy = vacancies.find(v => v.designation === candidate.applyFor);
+                    if (!vacancy || vacancy.department !== deptFilter) return false;
+                }
+                
+                return true;
+            });
+        }
+
+        function filterData() {
+            renderCandidatesTable();
+            renderBackoutTable();
+            updateDashboard();
+            updateCharts();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterRecruiter').value = 'all';
+            document.getElementById('filterYear').value = 'all';
+            document.getElementById('filterDepartment').value = 'all';
+            document.getElementById('filterDesignation').value = 'all';
+            document.getElementById('filterStatus').value = 'all';
+            filterData();
+            showNotification('Filters cleared successfully!', 'success');
+        }
+
+        // Update filters dropdowns
+        function updateFilters() {
+            const recruiterSelect = document.getElementById('filterRecruiter');
+            const yearSelect = document.getElementById('filterYear');
+            const deptSelect = document.getElementById('filterDepartment');
+            const desigSelect = document.getElementById('filterDesignation');
+            const statusSelect = document.getElementById('filterStatus');
+            const applyDesigSelect = document.getElementById('applyForDesignation');
+            const recruiterNameSelect = document.getElementById('recruiterName');
+            const vacancyRecruiterSelect = document.getElementById('vacancyRecruiter');
+            const candidateStatusSelect = document.getElementById('candidateStatus');
+            const joinLocationSelect = document.getElementById('joinLocation');
+            const vacancyLocationSelect = document.getElementById('vacancyLocation');
+            const vacancyDepartmentSelect = document.getElementById('vacancyDepartment');
+            
+            // Update recruiters
+            recruiterSelect.innerHTML = '<option value="all">All Recruiters</option>' +
+                settings.recruiters.map(r => `<option value="${r}">${r}</option>`).join('');
+            
+            recruiterNameSelect.innerHTML = '<option value="">Select Recruiter</option>' +
+                settings.recruiters.map(r => `<option value="${r}">${r}</option>`).join('');
+            
+            vacancyRecruiterSelect.innerHTML = '<option value="">Select Recruiter</option>' +
+                settings.recruiters.map(r => `<option value="${r}">${r}</option>`).join('');
+            
+            // Update years
+            yearSelect.innerHTML = '<option value="all">All Years</option>' +
+                years.map(y => `<option value="${y}">${y}</option>`).join('');
+            
+            // Update departments
+            const allDepartments = [...new Set(vacancies.map(v => v.department).concat(settings.departments))];
+            deptSelect.innerHTML = '<option value="all">All Departments</option>' +
+                allDepartments.map(d => `<option value="${d}">${d}</option>`).join('');
+            
+            vacancyDepartmentSelect.innerHTML = '<option value="">Select Department</option>' +
+                allDepartments.map(d => `<option value="${d}">${d}</option>`).join('');
+            
+            // Update designations from vacancies and settings
+            const allDesignations = [...new Set(vacancies.map(v => v.designation).concat(settings.designations))];
+            desigSelect.innerHTML = '<option value="all">All Designations</option>' +
+                allDesignations.map(d => `<option value="${d}">${d}</option>`).join('');
+            
+            // Update apply for designation dropdown
+            applyDesigSelect.innerHTML = '<option value="">Select Designation</option>' +
+                allDesignations.map(d => `<option value="${d}">${d}</option>`).join('');
+            
+            // Update status
+            statusSelect.innerHTML = '<option value="all">All Status</option>' +
+                settings.statuses.map(s => `<option value="${s}">${s}</option>`).join('');
+            
+            candidateStatusSelect.innerHTML = '<option value="">Select Status</option>' +
+                settings.statuses.map(s => `<option value="${s}">${s}</option>`).join('');
+            
+            // Update locations
+            const allLocations = [...new Set(vacancies.map(v => v.location).concat(settings.locations))];
+            joinLocationSelect.innerHTML = '<option value="">Select Location</option>' +
+                allLocations.map(l => `<option value="${l}">${l}</option>`).join('');
+            
+            vacancyLocationSelect.innerHTML = '<option value="">Select Location</option>' +
+                allLocations.map(l => `<option value="${l}">${l}</option>`).join('');
+        }
+
+        // Tab functions
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Activate corresponding button
+            event.currentTarget.classList.add('active');
+            
+            // Update charts if analytics tab
+            if (tabName === 'analytics') {
+                updateCharts();
+            }
+        }
+
+        // Modal functions
+        function showAddCandidateModal() {
+            document.getElementById('addCandidateModal').style.display = 'block';
+            updateFilters();
+            
+            // Clear previous form
+            document.getElementById('candidateForm').reset();
+            
+            // Reset DOJ field visibility
+            toggleDOJField();
+            
+            // Set today's date as default for DOJ
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateOfJoining').value = today;
+            document.getElementById('dateOfJoining').min = today;
+            
+            // Calculate new CTC when values change
+            document.getElementById('currentCTC').addEventListener('input', calculateNewCTC);
+            document.getElementById('hikePercentage').addEventListener('input', calculateNewCTC);
+            
+            // Reset submit button
+            const submitBtn = document.querySelector('#candidateForm button[type="submit"]');
+            submitBtn.textContent = 'Add Candidate';
+            submitBtn.onclick = function(e) {
+                e.preventDefault();
+                addCandidate(e);
+            };
+        }
+
+        function showAddVacancyModal() {
+            document.getElementById('addVacancyModal').style.display = 'block';
+            updateFilters();
+            
+            // Clear form
+            document.getElementById('vacancyForm').reset();
+            
+            // Set default target date (3 months from now)
+            const futureDate = new Date();
+            futureDate.setMonth(futureDate.getMonth() + 3);
+        }
+
+        function showSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'block';
+            loadSettingsLists();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Toggle DOJ field based on status
+        function toggleDOJField() {
+            const status = document.getElementById('candidateStatus').value;
+            const dojContainer = document.getElementById('dojFieldContainer');
+            const dojInput = document.getElementById('dateOfJoining');
+            
+            // Show DOJ field only for Selected or Joined status
+            if (status === 'Selected' || status === 'Joined') {
+                dojContainer.style.display = 'grid';
+                dojInput.required = true;
+            } else {
+                dojContainer.style.display = 'none';
+                dojInput.required = false;
+            }
+        }
+
+        // Calculate new CTC
+        function calculateNewCTC() {
+            const currentCTC = parseFloat(document.getElementById('currentCTC').value) || 0;
+            const hike = parseFloat(document.getElementById('hikePercentage').value) || 0;
+            const newCTC = currentCTC * (1 + hike / 100);
+            
+            // Show calculated value to user
+            const hikeField = document.getElementById('hikePercentage');
+            let span = hikeField.parentNode.querySelector('.calculated-ctc');
+            
+            if (!span) {
+                span = document.createElement('span');
+                span.className = 'calculated-ctc';
+                span.style.cssText = 'font-size: 12px; color: #4CAF50; margin-top: 5px;';
+                hikeField.parentNode.appendChild(span);
+            }
+            
+            if (!isNaN(newCTC) && currentCTC > 0) {
+                span.textContent = `New CTC: ₹${newCTC.toFixed(2)} LPA`;
+                span.style.color = '#4CAF50';
+            } else {
+                span.textContent = 'Enter valid CTC and hike %';
+                span.style.color = '#f44336';
+            }
+        }
+
+        // Add candidate
+        function addCandidate(event) {
+            event.preventDefault();
+            
+            const recruiter = document.getElementById('recruiterName').value;
+            const name = document.getElementById('candidateName').value;
+            const email = document.getElementById('candidateEmail').value;
+            const applyFor = document.getElementById('applyForDesignation').value;
+            const status = document.getElementById('candidateStatus').value;
+            const doj = document.getElementById('dateOfJoining').value;
+            
+            // Validate DOJ for Selected/Joined status
+            if ((status === 'Selected' || status === 'Joined') && !doj) {
+                showNotification('Date of Joining is required for Selected/Joined status!', 'error');
+                return;
+            }
+            
+            if (!recruiter || !name || !email || !applyFor || !status) {
+                showNotification('Please fill all required fields!', 'error');
+                return;
+            }
+            
+            const newCandidate = {
+                id: Date.now(),
+                recruiter: recruiter,
+                name: name,
+                email: email,
+                currentDesignation: document.getElementById('currentDesignation').value,
+                currentCTC: parseFloat(document.getElementById('currentCTC').value) || 0,
+                currentCompany: document.getElementById('currentCompany').value,
+                companyLocation: document.getElementById('companyLocation').value,
+                applyFor: applyFor,
+                hike: parseFloat(document.getElementById('hikePercentage').value) || 0,
+                status: status,
+                doj: status === 'Selected' || status === 'Joined' ? doj : '',
+                location: document.getElementById('joinLocation').value,
+                dateCreated: new Date().toISOString()
+            };
+            
+            // Calculate after hike CTC
+            newCandidate.afterHikeCTC = newCandidate.currentCTC * (1 + newCandidate.hike / 100);
+            
+            candidates.push(newCandidate);
+            saveCandidates();
+            
+            // Update vacancy filled count if candidate is selected/joined
+            if (newCandidate.status === 'Selected' || newCandidate.status === 'Joined') {
+                updateVacancyCounts();
+            }
+            
+            // If status is backout, move to backout list
+            if (newCandidate.status === 'Backout') {
+                moveToBackout(newCandidate.id, true);
+            }
+            
+            renderCandidatesTable();
+            updateDashboard();
+            updateFilters();
+            closeModal('addCandidateModal');
+            document.getElementById('candidateForm').reset();
+            
+            showNotification('Candidate added successfully!', 'success');
+            
+            // Auto-send email if selected
+            if (newCandidate.status === 'Selected') {
+                setTimeout(() => {
+                    sendAutoEmail(newCandidate.email, newCandidate.name, 'selected');
+                }, 1000);
+            }
+        }
+
+        // Add vacancy
+        function addVacancy(event) {
+            event.preventDefault();
+            
+            const company = document.getElementById('vacancyCompany').value;
+            const department = document.getElementById('vacancyDepartment').value;
+            const designation = document.getElementById('vacancyDesignation').value;
+            const total = parseInt(document.getElementById('totalVacancies').value);
+            
+            if (!company || !department || !designation || !total) {
+                showNotification('Please fill all required fields!', 'error');
+                return;
+            }
+            
+            const newVacancy = {
+                id: Date.now(),
+                company: company,
+                department: department,
+                designation: designation,
+                total: total,
+                filled: 0,
+                remaining: total,
+                status: 'Open',
+                location: document.getElementById('vacancyLocation').value,
+                recruiter: document.getElementById('vacancyRecruiter').value || 'Not assigned',
+                targetDate: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString().split('T')[0]
+            };
+            
+            vacancies.push(newVacancy);
+            saveVacancies();
+            
+            renderVacanciesTable();
+            updateDashboard();
+            updateFilters();
+            closeModal('addVacancyModal');
+            document.getElementById('vacancyForm').reset();
+            
+            showNotification('Vacancy added successfully!', 'success');
+        }
+
+        // Move candidate to backout
+        function moveToBackout(candidateId, fromAdd = false) {
+            const candidateIndex = candidates.findIndex(c => c.id === candidateId);
+            if (candidateIndex === -1) return;
+            
+            const candidate = candidates[candidateIndex];
+            let backoutReason = 'Candidate declined offer';
+            
+            if (!fromAdd) {
+                backoutReason = prompt('Enter backout reason:', 'Candidate declined offer');
+                if (backoutReason === null) return; // User cancelled
+            }
+            
+            candidate.backoutDate = new Date().toISOString();
+            candidate.backoutReason = backoutReason;
+            
+            backoutCandidates.push(candidate);
+            candidates.splice(candidateIndex, 1);
+            
+            // Update vacancy counts
+            updateVacancyCounts();
+            
+            saveCandidates();
+            saveBackoutCandidates();
+            
+            renderCandidatesTable();
+            renderBackoutTable();
+            updateDashboard();
+            
+            // Send backout acknowledgment email
+            if (!fromAdd) {
+                sendAutoEmail(candidate.email, candidate.name, 'backout');
+                showNotification('Candidate moved to backout list', 'success');
+            }
+        }
+
+        // Update vacancy counts
+        function updateVacancyCounts() {
+            vacancies.forEach(vacancy => {
+                const filledCount = candidates.filter(c => 
+                    c.applyFor === vacancy.designation && 
+                    (c.status === 'Selected' || c.status === 'Joined')
+                ).length;
+                
+                vacancy.filled = filledCount;
+                vacancy.remaining = vacancy.total - filledCount;
+                vacancy.status = vacancy.remaining === 0 ? 'Filled' : 'Open';
+            });
+            
+            saveVacancies();
+            renderVacanciesTable();
+        }
+
+        // Update dashboard
+        function updateDashboard() {
+            const filteredCandidates = getFilteredCandidates();
+            
+            document.getElementById('totalCandidates').textContent = filteredCandidates.length;
+            document.getElementById('selectedCandidates').textContent = 
+                filteredCandidates.filter(c => c.status === 'Selected' || c.status === 'Joined').length;
+            document.getElementById('backoutCandidates').textContent = backoutCandidates.length;
+            document.getElementById('pendingJoining').textContent = 
+                filteredCandidates.filter(c => c.status === 'Selected' && !c.doj).length;
+            
+            const openVacancies = vacancies.reduce((sum, v) => sum + v.remaining, 0);
+            document.getElementById('openVacancies').textContent = openVacancies;
+        }
+
+        // Settings Management
+        function loadSettingsLists() {
+            // Load recruiters
+            const recruitersList = document.getElementById('recruitersList');
+            recruitersList.innerHTML = settings.recruiters.map(recruiter => `
+                <div class="settings-item">
+                    <i class="fas fa-user"></i>
+                    <span>${recruiter}</span>
+                    <button onclick="removeRecruiter('${recruiter}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            // Load departments
+            const departmentsList = document.getElementById('departmentsList');
+            departmentsList.innerHTML = settings.departments.map(dept => `
+                <div class="settings-item">
+                    <i class="fas fa-building"></i>
+                    <span>${dept}</span>
+                    <button onclick="removeDepartment('${dept}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            // Load designations
+            const designationsList = document.getElementById('designationsList');
+            designationsList.innerHTML = settings.designations.map(desig => `
+                <div class="settings-item">
+                    <i class="fas fa-user-tag"></i>
+                    <span>${desig}</span>
+                    <button onclick="removeDesignation('${desig}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            // Load statuses
+            const statusesList = document.getElementById('statusesList');
+            statusesList.innerHTML = settings.statuses.map(status => `
+                <div class="settings-item">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>${status}</span>
+                    <button onclick="removeStatus('${status}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            // Load locations
+            const locationsList = document.getElementById('locationsList');
+            locationsList.innerHTML = settings.locations.map(location => `
+                <div class="settings-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>${location}</span>
+                    <button onclick="removeLocation('${location}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function addRecruiter() {
+            const input = document.getElementById('newRecruiter');
+            const recruiter = input.value.trim();
+            
+            if (recruiter && !settings.recruiters.includes(recruiter)) {
+                settings.recruiters.push(recruiter);
+                saveSettings();
+                loadSettingsLists();
+                updateFilters();
+                input.value = '';
+                showNotification(`Recruiter "${recruiter}" added`, 'success');
+            } else if (settings.recruiters.includes(recruiter)) {
+                showNotification('Recruiter already exists!', 'error');
+            }
+        }
+
+        function removeRecruiter(recruiter) {
+            if (confirm(`Remove recruiter "${recruiter}"?`)) {
+                const index = settings.recruiters.indexOf(recruiter);
+                if (index > -1) {
+                    settings.recruiters.splice(index, 1);
+                    saveSettings();
+                    loadSettingsLists();
+                    updateFilters();
+                    showNotification(`Recruiter "${recruiter}" removed`, 'success');
+                }
+            }
+        }
+
+        function addDepartment() {
+            const input = document.getElementById('newDepartment');
+            const department = input.value.trim();
+            
+            if (department && !settings.departments.includes(department)) {
+                settings.departments.push(department);
+                saveSettings();
+                loadSettingsLists();
+                updateFilters();
+                input.value = '';
+                showNotification(`Department "${department}" added`, 'success');
+            } else if (settings.departments.includes(department)) {
+                showNotification('Department already exists!', 'error');
+            }
+        }
+
+        function removeDepartment(department) {
+            if (confirm(`Remove department "${department}"?`)) {
+                const index = settings.departments.indexOf(department);
+                if (index > -1) {
+                    settings.departments.splice(index, 1);
+                    saveSettings();
+                    loadSettingsLists();
+                    updateFilters();
+                    showNotification(`Department "${department}" removed`, 'success');
+                }
+            }
+        }
+
+        function addDesignation() {
+            const input = document.getElementById('newDesignation');
+            const designation = input.value.trim();
+            
+            if (designation && !settings.designations.includes(designation)) {
+                settings.designations.push(designation);
+                saveSettings();
+                loadSettingsLists();
+                updateFilters();
+                input.value = '';
+                showNotification(`Designation "${designation}" added`, 'success');
+            } else if (settings.designations.includes(designation)) {
+                showNotification('Designation already exists!', 'error');
+            }
+        }
+
+        function removeDesignation(designation) {
+            if (confirm(`Remove designation "${designation}"?`)) {
+                const index = settings.designations.indexOf(designation);
+                if (index > -1) {
+                    settings.designations.splice(index, 1);
+                    saveSettings();
+                    loadSettingsLists();
+                    updateFilters();
+                    showNotification(`Designation "${designation}" removed`, 'success');
+                }
+            }
+        }
+
+        function addStatus() {
+            const input = document.getElementById('newStatus');
+            const status = input.value.trim();
+            
+            if (status && !settings.statuses.includes(status)) {
+                settings.statuses.push(status);
+                saveSettings();
+                loadSettingsLists();
+                updateFilters();
+                input.value = '';
+                showNotification(`Status "${status}" added`, 'success');
+            } else if (settings.statuses.includes(status)) {
+                showNotification('Status already exists!', 'error');
+            }
+        }
+
+        function removeStatus(status) {
+            if (confirm(`Remove status "${status}"?`)) {
+                const index = settings.statuses.indexOf(status);
+                if (index > -1) {
+                    settings.statuses.splice(index, 1);
+                    saveSettings();
+                    loadSettingsLists();
+                    updateFilters();
+                    showNotification(`Status "${status}" removed`, 'success');
+                }
+            }
+        }
+
+        function addLocation() {
+            const input = document.getElementById('newLocation');
+            const location = input.value.trim();
+            
+            if (location && !settings.locations.includes(location)) {
+                settings.locations.push(location);
+                saveSettings();
+                loadSettingsLists();
+                updateFilters();
+                input.value = '';
+                showNotification(`Location "${location}" added`, 'success');
+            } else if (settings.locations.includes(location)) {
+                showNotification('Location already exists!', 'error');
+            }
+        }
+
+        function removeLocation(location) {
+            if (confirm(`Remove location "${location}"?`)) {
+                const index = settings.locations.indexOf(location);
+                if (index > -1) {
+                    settings.locations.splice(index, 1);
+                    saveSettings();
+                    loadSettingsLists();
+                    updateFilters();
+                    showNotification(`Location "${location}" removed`, 'success');
+                }
+            }
+        }
+
+        // Email functionality
+        function sendEmailModal(email, name) {
+            document.getElementById('emailTo').value = email;
+            document.getElementById('emailModal').style.display = 'block';
+            updateEmailTemplate();
+        }
+
+        function updateEmailTemplate() {
+            const emailType = document.getElementById('emailType').value;
+            const email = document.getElementById('emailTo').value;
+            const name = email.split('@')[0];
+            let subject = '';
+            let message = '';
+            
+            switch(emailType) {
+                case 'selected':
+                    subject = 'Congratulations! You have been selected';
+                    message = `Dear ${name},\n\nCongratulations! We are pleased to inform you that you have been selected for the position.\n\nPlease let us know your availability for further discussion regarding the offer.\n\nBest regards,\nHR Team`;
+                    break;
+                case 'rejected':
+                    subject = 'Regarding Your Application';
+                    message = `Dear ${name},\n\nThank you for your interest in our company and for taking the time to interview with us.\n\nAfter careful consideration, we have decided to move forward with other candidates whose qualifications more closely match our current needs.\n\nWe wish you the best in your job search.\n\nBest regards,\nHR Team`;
+                    break;
+                case 'joining':
+                    subject = 'Joining Details and Documents Required';
+                    const candidate = candidates.find(c => c.email === email);
+                    const doj = candidate && candidate.doj ? new Date(candidate.doj).toLocaleDateString() : '[Date]';
+                    const location = candidate && candidate.location ? candidate.location : '[Location]';
+                    message = `Dear ${name},\n\nWe are delighted to have you onboard!\n\nPlease find below your joining details:\nDate: ${doj}\nTime: 9:00 AM\nLocation: ${location}\n\nDocuments required:\n1. Resume\n2. Educational certificates\n3. Previous employment certificates\n4. ID proof (Aadhar/PAN/Passport)\n5. Passport size photos (2 copies)\n6. Bank account details\n\nPlease report to the reception on your joining date.\n\nBest regards,\nHR Team`;
+                    break;
+                case 'backout':
+                    subject = 'Acknowledgment of Withdrawal';
+                    message = `Dear ${name},\n\nWe acknowledge your decision to withdraw from the selection process.\n\nWe appreciate your interest in our organization and wish you the best in your future endeavors.\n\nBest regards,\nHR Team`;
+                    break;
+            }
+            
+            document.getElementById('emailSubject').value = subject;
+            document.getElementById('emailMessage').value = message;
+        }
+
+        function sendEmail() {
+            const to = document.getElementById('emailTo').value;
+            const subject = document.getElementById('emailSubject').value;
+            const message = document.getElementById('emailMessage').value;
+            
+            // Using mailto link for demo (in real app, use EmailJS or backend)
+            const mailtoLink = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+            window.open(mailtoLink);
+            
+            showNotification('Email client opened. Click send to send the email.', 'info');
+            closeModal('emailModal');
+        }
+
+        function sendAutoEmail(email, name, type) {
+            let subject = '';
+            let message = '';
+            
+            switch(type) {
+                case 'selected':
+                    subject = 'Congratulations! You have been selected';
+                    message = `Dear ${name},\n\nCongratulations! We are pleased to inform you that you have been selected for the position.\n\nOur HR team will contact you shortly with the offer details.\n\nBest regards,\nHR Team`;
+                    break;
+                case 'backout':
+                    subject = 'Acknowledgment of Withdrawal';
+                    message = `Dear ${name},\n\nWe acknowledge your decision to withdraw from the selection process.\n\nWe appreciate your interest in our organization and wish you the best in your future endeavors.\n\nBest regards,\nHR Team`;
+                    break;
+            }
+            
+            const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+            
+            // Show notification instead of automatically opening email client
+            showNotification(`${name} has been ${type}. Email template ready to send.`, 'info');
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            if (candidates.length === 0) {
+                showNotification('No data to export!', 'error');
+                return;
+            }
+            
+            // Create CSV content for candidates
+            let csv = 'S.No,Recruiter,Candidate Name,Email,Current Designation,Current CTC,Company,Apply For,Hike %,New CTC,Status,DOJ,Location\n';
+            
+            candidates.forEach((candidate, index) => {
+                csv += `${index + 1},${candidate.recruiter},${candidate.name},${candidate.email},${candidate.currentDesignation},${candidate.currentCTC},${candidate.currentCompany},${candidate.applyFor},${candidate.hike || 0},${candidate.afterHikeCTC || ''},${candidate.status},${candidate.doj || ''},${candidate.location || ''}\n`;
+            });
+            
+            // Add vacancies data
+            csv += '\n\nVacancies Data\n';
+            csv += 'Company,Department,Designation,Total Vacancies,Filled,Remaining,Status,Location,Recruiter\n';
+            
+            vacancies.forEach(vacancy => {
+                csv += `${vacancy.company},${vacancy.department},${vacancy.designation},${vacancy.total},${vacancy.filled},${vacancy.remaining},${vacancy.status},${vacancy.location},${vacancy.recruiter}\n`;
+            });
+            
+            // Create and download file
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `onboarding-tracker-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Data exported successfully as CSV!', 'success');
+        }
+
+        // Charts
+        let vacancyChart, hiringChart, recruiterChart, statusChart;
+
+        function initializeCharts() {
+            const ctx1 = document.getElementById('vacancyChart').getContext('2d');
+            const ctx2 = document.getElementById('hiringChart').getContext('2d');
+            const ctx3 = document.getElementById('recruiterChart').getContext('2d');
+            const ctx4 = document.getElementById('statusChart').getContext('2d');
+            
+            vacancyChart = new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#4CAF50', '#f44336', '#2196F3', '#ff9800', '#9c27b0']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            hiringChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Candidates Joined',
+                        data: Array(12).fill(0),
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            recruiterChart = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Candidates Placed',
+                        data: [],
+                        backgroundColor: '#4CAF50'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            statusChart = new Chart(ctx4, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#4CAF50', '#2196F3', '#ff9800', '#f44336', '#9c27b0', '#607d8b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            updateCharts();
+        }
+
+        function updateCharts() {
+            // Update vacancy chart
+            const vacancyStatus = vacancies.reduce((acc, v) => {
+                acc[v.status] = (acc[v.status] || 0) + 1;
+                return acc;
+            }, {});
+            
+            vacancyChart.data.labels = Object.keys(vacancyStatus);
+            vacancyChart.data.datasets[0].data = Object.values(vacancyStatus);
+            vacancyChart.update();
+            
+            // Update hiring trend chart
+            const monthlyData = Array(12).fill(0);
+            candidates.forEach(c => {
+                if (c.doj) {
+                    const month = new Date(c.doj).getMonth();
+                    monthlyData[month]++;
+                }
+            });
+            hiringChart.data.datasets[0].data = monthlyData;
+            hiringChart.update();
+            
+            // Update recruiter chart
+            const recruiterData = {};
+            candidates.forEach(c => {
+                if (c.status === 'Selected' || c.status === 'Joined') {
+                    recruiterData[c.recruiter] = (recruiterData[c.recruiter] || 0) + 1;
+                }
+            });
+            
+            recruiterChart.data.labels = Object.keys(recruiterData);
+            recruiterChart.data.datasets[0].data = Object.values(recruiterData);
+            recruiterChart.update();
+            
+            // Update status chart
+            const statusData = {};
+            candidates.forEach(c => {
+                statusData[c.status] = (statusData[c.status] || 0) + 1;
+            });
+            
+            statusChart.data.labels = Object.keys(statusData);
+            statusChart.data.datasets[0].data = Object.values(statusData);
+            statusChart.update();
+        }
+
+        // Edit functions
+        function editCandidate(id) {
+            const candidate = candidates.find(c => c.id === id);
+            if (candidate) {
+                // Populate modal with candidate data
+                document.getElementById('recruiterName').value = candidate.recruiter;
+                document.getElementById('candidateName').value = candidate.name;
+                document.getElementById('candidateEmail').value = candidate.email;
+                document.getElementById('currentDesignation').value = candidate.currentDesignation;
+                document.getElementById('currentCTC').value = candidate.currentCTC;
+                document.getElementById('hikePercentage').value = candidate.hike;
+                document.getElementById('currentCompany').value = candidate.currentCompany;
+                document.getElementById('companyLocation').value = candidate.companyLocation;
+                document.getElementById('applyForDesignation').value = candidate.applyFor;
+                document.getElementById('candidateStatus').value = candidate.status;
+                document.getElementById('dateOfJoining').value = candidate.doj;
+                document.getElementById('joinLocation').value = candidate.location;
+                
+                // Update filters and show modal
+                updateFilters();
+                document.getElementById('addCandidateModal').style.display = 'block';
+                
+                // Toggle DOJ field
+                toggleDOJField();
+                
+                // Change button text
+                const submitBtn = document.querySelector('#candidateForm button[type="submit"]');
+                submitBtn.textContent = 'Update Candidate';
+                submitBtn.onclick = function(e) {
+                    e.preventDefault();
+                    updateCandidate(id);
+                };
+                
+                showNotification(`Editing candidate: ${candidate.name}`, 'info');
+            }
+        }
+
+        function updateCandidate(id) {
+            const candidateIndex = candidates.findIndex(c => c.id === id);
+            if (candidateIndex === -1) return;
+            
+            const oldStatus = candidates[candidateIndex].status;
+            const status = document.getElementById('candidateStatus').value;
+            const doj = document.getElementById('dateOfJoining').value;
+            
+            // Validate DOJ for Selected/Joined status
+            if ((status === 'Selected' || status === 'Joined') && !doj) {
+                showNotification('Date of Joining is required for Selected/Joined status!', 'error');
+                return;
+            }
+            
+            candidates[candidateIndex] = {
+                id: id,
+                recruiter: document.getElementById('recruiterName').value,
+                name: document.getElementById('candidateName').value,
+                email: document.getElementById('candidateEmail').value,
+                currentDesignation: document.getElementById('currentDesignation').value,
+                currentCTC: parseFloat(document.getElementById('currentCTC').value) || 0,
+                currentCompany: document.getElementById('currentCompany').value,
+                companyLocation: document.getElementById('companyLocation').value,
+                applyFor: document.getElementById('applyForDesignation').value,
+                hike: parseFloat(document.getElementById('hikePercentage').value) || 0,
+                status: status,
+                doj: status === 'Selected' || status === 'Joined' ? doj : '',
+                location: document.getElementById('joinLocation').value,
+                dateCreated: candidates[candidateIndex].dateCreated
+            };
+            
+            // Calculate after hike CTC
+            candidates[candidateIndex].afterHikeCTC = candidates[candidateIndex].currentCTC * 
+                (1 + candidates[candidateIndex].hike / 100);
+            
+            // If status changed to/from Selected/Joined, update vacancies
+            if (oldStatus !== candidates[candidateIndex].status && 
+                (oldStatus === 'Selected' || oldStatus === 'Joined' || 
+                 candidates[candidateIndex].status === 'Selected' || 
+                 candidates[candidateIndex].status === 'Joined')) {
+                updateVacancyCounts();
+            }
+            
+            // If moved to backout
+            if (candidates[candidateIndex].status === 'Backout') {
+                moveToBackout(id);
+            } else {
+                saveCandidates();
+                renderCandidatesTable();
+                updateDashboard();
+                updateFilters();
+                closeModal('addCandidateModal');
+                
+                // Reset form button
+                const submitBtn = document.querySelector('#candidateForm button[type="submit"]');
+                submitBtn.textContent = 'Add Candidate';
+                submitBtn.onclick = function(e) {
+                    e.preventDefault();
+                    addCandidate(e);
+                };
+                
+                document.getElementById('candidateForm').reset();
+                showNotification('Candidate updated successfully!', 'success');
+            }
+        }
+
+        function changeStatus(id) {
+            const candidate = candidates.find(c => c.id === id);
+            if (candidate) {
+                const newStatus = prompt('Enter new status:', candidate.status);
+                if (newStatus && newStatus !== candidate.status) {
+                    const oldStatus = candidate.status;
+                    
+                    // Check if DOJ is required
+                    let doj = candidate.doj;
+                    if ((newStatus === 'Selected' || newStatus === 'Joined') && !doj) {
+                        doj = prompt('Enter Date of Joining (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+                        if (!doj) {
+                            showNotification('Date of Joining is required for Selected/Joined status!', 'error');
+                            return;
+                        }
+                    }
+                    
+                    candidate.status = newStatus;
+                    if ((newStatus === 'Selected' || newStatus === 'Joined') && doj) {
+                        candidate.doj = doj;
+                    }
+                    
+                    // Update vacancy counts if status changed to/from Selected/Joined
+                    if (oldStatus !== newStatus && 
+                        (oldStatus === 'Selected' || oldStatus === 'Joined' || 
+                         newStatus === 'Selected' || newStatus === 'Joined')) {
+                        updateVacancyCounts();
+                    }
+                    
+                    // If moved to backout
+                    if (newStatus === 'Backout') {
+                        moveToBackout(id);
+                    } else {
+                        saveCandidates();
+                        renderCandidatesTable();
+                        updateDashboard();
+                        showNotification(`Status updated to: ${newStatus}`, 'success');
+                    }
+                }
+            }
+        }
+
+        function editVacancy(id) {
+            const vacancy = vacancies.find(v => v.id === id);
+            if (vacancy) {
+                // Populate modal with vacancy data
+                document.getElementById('vacancyCompany').value = vacancy.company;
+                document.getElementById('vacancyDepartment').value = vacancy.department;
+                document.getElementById('vacancyDesignation').value = vacancy.designation;
+                document.getElementById('totalVacancies').value = vacancy.total;
+                document.getElementById('vacancyLocation').value = vacancy.location;
+                document.getElementById('vacancyRecruiter').value = vacancy.recruiter;
+                
+                // Update filters and show modal
+                updateFilters();
+                document.getElementById('addVacancyModal').style.display = 'block';
+                
+                // Change button text
+                const submitBtn = document.querySelector('#vacancyForm button[type="submit"]');
+                submitBtn.textContent = 'Update Vacancy';
+                submitBtn.onclick = function(e) {
+                    e.preventDefault();
+                    updateVacancy(id);
+                };
+                
+                showNotification(`Editing vacancy: ${vacancy.designation}`, 'info');
+            }
+        }
+
+        function updateVacancy(id) {
+            const vacancyIndex = vacancies.findIndex(v => v.id === id);
+            if (vacancyIndex === -1) return;
+            
+            vacancies[vacancyIndex] = {
+                id: id,
+                company: document.getElementById('vacancyCompany').value,
+                department: document.getElementById('vacancyDepartment').value,
+                designation: document.getElementById('vacancyDesignation').value,
+                total: parseInt(document.getElementById('totalVacancies').value),
+                filled: vacancies[vacancyIndex].filled,
+                remaining: parseInt(document.getElementById('totalVacancies').value) - vacancies[vacancyIndex].filled,
+                status: (parseInt(document.getElementById('totalVacancies').value) - vacancies[vacancyIndex].filled) === 0 ? 'Filled' : 'Open',
+                location: document.getElementById('vacancyLocation').value,
+                recruiter: document.getElementById('vacancyRecruiter').value || 'Not assigned',
+                targetDate: vacancies[vacancyIndex].targetDate
+            };
+            
+            saveVacancies();
+            renderVacanciesTable();
+            updateDashboard();
+            updateFilters();
+            closeModal('addVacancyModal');
+            
+            // Reset form button
+            const submitBtn = document.querySelector('#vacancyForm button[type="submit"]');
+            submitBtn.textContent = 'Add Vacancy';
+            submitBtn.onclick = function(e) {
+                e.preventDefault();
+                addVacancy(e);
+            };
+            
+            document.getElementById('vacancyForm').reset();
+            showNotification('Vacancy updated successfully!', 'success');
+        }
+
+        function deleteVacancy(id) {
+            if (confirm('Are you sure you want to delete this vacancy?')) {
+                const index = vacancies.findIndex(v => v.id === id);
+                if (index !== -1) {
+                    vacancies.splice(index, 1);
+                    saveVacancies();
+                    renderVacanciesTable();
+                    updateFilters();
+                    updateDashboard();
+                    showNotification('Vacancy deleted successfully!', 'success');
+                }
+            }
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            document.querySelectorAll('.notification').forEach(n => n.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Initialize charts after page load
+        window.onload = function() {
+            setTimeout(initializeCharts, 500);
+        };
+    </script>
+</body>
+</html>
