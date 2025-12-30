@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding Tracker - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .login-header i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .login-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .login-header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .login-body {
+            padding: 30px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group input {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-login {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .user-role-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .user-role-info h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .user-role-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .user-role-info li {
+            padding: 5px 0;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-role-info li i {
+            color: #667eea;
+        }
+
+        .demo-credentials {
+            background: #fff3cd;
+            border: 1px solid #ffecb5;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .demo-credentials h4 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .demo-credentials table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .demo-credentials th {
+            text-align: left;
+            padding: 5px;
+            background: #ffeaa7;
+            font-size: 0.8rem;
+        }
+
+        .demo-credentials td {
+            padding: 5px;
+            border-bottom: 1px solid #ffecb5;
+            font-size: 0.8rem;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-message.show {
+            display: flex;
+        }
+
+        .login-footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 10px;
+            }
+            
+            .login-header {
+                padding: 20px;
+            }
+            
+            .login-body {
+                padding: 20px;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-container {
+            animation: fadeIn 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <i class="fas fa-user-tie"></i>
+            <h1>Onboarding Tracker</h1>
+            <p>HR Management System</p>
+        </div>
+        
+        <div class="login-body">
+            <div id="errorMessage" class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorText">Invalid credentials. Please try again.</span>
+            </div>
+            
+            <form class="login-form" id="loginForm" onsubmit="login(event)">
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-envelope"></i> Email
+                    </label>
+                    <input type="email" id="username" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+                
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+            
+            <div class="user-role-info">
+                <h4><i class="fas fa-info-circle"></i> User Roles & Permissions</h4>
+                <ul>
+                    <li><i class="fas fa-user-shield"></i> <strong>Admin:</strong> Full access to all features</li>
+                    <li><i class="fas fa-edit"></i> <strong>Editor:</strong> Can add/edit data, no user management</li>
+                    <li><i class="fas fa-eye"></i> <strong>Viewer:</strong> Read-only access</li>
+                </ul>
+            </div>
+            
+            <div class="demo-credentials">
+                <h4><i class="fas fa-key"></i> Demo Credentials</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Role</th>
+                            <th>Email</th>
+                            <th>Password</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Admin</strong></td>
+                            <td>hr.jpr@grew.one</td>
+                            <td>Ankit@0708</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Editor</strong></td>
+                            <td>rakesh.s@grew.one</td>
+                            <td>Rakesh@1234</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Viewer</strong></td>
+                            <td>View@gmail.com</td>
+                            <td>View@1234</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="login-footer">
+            <p>© 2024 Onboarding Tracker System. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        // Predefined users with roles
+        const users = [
+            {
+                email: 'hr.jpr@grew.one',
+                password: 'Ankit@0708',
+                name: 'HR Admin',
+                role: 'admin',
+                department: 'Human Resources'
+            },
+            {
+                email: 'rakesh.s@grew.one',
+                password: 'Rakesh@1234',
+                name: 'Rakesh Sharma',
+                role: 'editor',
+                department: 'Recruitment'
+            },
+            {
+                email: 'View@gmail.com',
+                password: 'View@1234',
+                name: 'View Only User',
+                role: 'viewer',
+                department: 'Management'
+            }
+        ];
+
+        // Login function
+        function login(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            // Find user
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                // Store user in session storage
+                sessionStorage.setItem('currentUser', JSON.stringify({
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                    department: user.department,
+                    loginTime: new Date().toISOString()
+                }));
+                
+                // Redirect to dashboard
+                window.location.href = 'dashboard.html';
+            } else {
+                showError('Invalid email or password. Please try again.');
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
+            errorText.textContent = message;
+            errorDiv.classList.add('show');
+            
+            // Hide error after 5 seconds
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        // Check if already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUser = sessionStorage.getItem('currentUser');
+            if (currentUser) {
+                // Redirect to dashboard if already logged in
+                window.location.href = 'dashboard.html';
+            }
+            
+            // Auto-fill demo credentials for testing
+            const urlParams = new URLSearchParams(window.location.search);
+            const demo = urlParams.get('demo');
+            
+            if (demo === 'admin') {
+                document.getElementById('username').value = 'hr.jpr@grew.one';
+                document.getElementById('password').value = 'Ankit@0708';
+            } else if (demo === 'editor') {
+                document.getElementById('username').value = 'rakesh.s@grew.one';
+                document.getElementById('password').value = 'Rakesh@1234';
+            } else if (demo === 'viewer') {
+                document.getElementById('username').value = 'View@gmail.com';
+                document.getElementById('password').value = 'View@1234';
+            }
+        });
+
+        // Allow Enter key to submit form
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
